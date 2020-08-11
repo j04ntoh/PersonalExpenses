@@ -1,6 +1,6 @@
 # flutter_expenses
 
-A new Flutter project.
+A Udemy Flutter project.
 
 ## Getting Started
 
