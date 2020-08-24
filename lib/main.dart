@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -60,7 +63,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final TextEditingController titleController = TextEditingController();
   final TextEditingController amountController = TextEditingController();
-  bool _showChart = false;
+  bool _showChart = true;
 
   final List<Transaction> _usertransaction = [
     // Transaction(id: "t1", title: "Adidas", amount: 59.59, date: DateTime.now()),
@@ -107,27 +110,40 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     final mediaQuery = MediaQuery.of(context);
     final bool isLandscape = mediaQuery.orientation == Orientation.landscape;
-    final appBar = AppBar(
-      title: Text(
-        widget.title,
-        style: Theme.of(context).appBarTheme.textTheme.headline1,
-      ),
-      actions: <Widget>[
-        IconButton(
-          icon: Icon(Icons.add),
-          onPressed: () => _startAddNewTransaction(context),
-        ),
-      ],
-    );
+    final PreferredSizeWidget appBar = Platform.isIOS
+        ? CupertinoNavigationBar(
+            middle: Text('Personal Expenses'),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: <Widget>[
+                GestureDetector(
+                  child: Icon(CupertinoIcons.add),
+                  onTap: () => _startAddNewTransaction(context),
+                ),
+              ],
+            ),
+          )
+        : AppBar(
+            title: Text(
+              widget.title,
+              style: Theme.of(context).appBarTheme.textTheme.headline1,
+            ),
+            actions: <Widget>[
+              IconButton(
+                icon: Icon(Icons.add),
+                onPressed: () => _startAddNewTransaction(context),
+              ),
+            ],
+          );
     final txtListWidget = Container(
         height: (mediaQuery.size.height -
                 appBar.preferredSize.height -
                 mediaQuery.padding.top) *
             0.7,
         child: TransactionList(_usertransaction, _deleteTransaction));
-    return Scaffold(
-      appBar: appBar,
-      body: SingleChildScrollView(
+
+    final pageBody = SafeArea(
+      child: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
@@ -135,7 +151,10 @@ class _MyHomePageState extends State<MyHomePage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
-                  Text('Show Chart'),
+                  Text(
+                    'Show Chart',
+                    style: Theme.of(context).textTheme.headline1,
+                  ),
                   Switch(
                     value: _showChart,
                     onChanged: (value) {
@@ -145,6 +164,14 @@ class _MyHomePageState extends State<MyHomePage> {
                     },
                   )
                 ],
+              ),
+            if (!isLandscape)
+              Container(
+                height: (mediaQuery.size.height -
+                        appBar.preferredSize.height -
+                        mediaQuery.padding.top) *
+                    0.25,
+                child: Chart(_recentTransactions),
               ),
             if (!isLandscape) txtListWidget,
             if (isLandscape)
@@ -159,12 +186,18 @@ class _MyHomePageState extends State<MyHomePage> {
           ],
         ),
       ),
+    );
+    return Scaffold(
+      appBar: appBar,
+      body: pageBody,
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _startAddNewTransaction(context),
-        tooltip: 'Add Transaction',
-        child: Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+      floatingActionButton: Platform.isIOS
+          ? Container()
+          : FloatingActionButton(
+              onPressed: () => _startAddNewTransaction(context),
+              tooltip: 'Add Transaction',
+              child: Icon(Icons.add),
+            ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
 }
